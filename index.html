@@ -571,7 +571,7 @@ function stackPositions(){
     const a = Math.random()*Math.PI*2, r = Math.sqrt(Math.random())*1.8;
     const e = ents[id];
     e.x = Math.cos(a)*r; e.y = 5 + Math.sin(a)*r;
-    e.face = N_; e.dep = Infinity; e.arrived = false;
+    e.face = N_; e.dep = Infinity; e.arrived = false; e.sx = undefined;
   }
 }
 function start(){
@@ -608,6 +608,8 @@ function reveal(){
     if(id===me){ e.dep = Infinity; continue; }
     const dist = Math.hypot(sp.x - e.x, sp.y - e.y);
     e.dep = Math.max(0.3, ARRIVE - dist/SPEED - 0.15 + (Math.random()*0.5 - 0.25));
+    e.sx = e.x; e.sy = e.y; e.face0 = e.face; e.dist = dist;
+    e.mang = dist > 0.01 ? Math.atan2(sp.y - e.y, sp.x - e.x) : e.face;
   }
   genDecoys();
   state = 'live';
@@ -675,6 +677,7 @@ function judge(){
 function resolve(){
   if(state!=='live') return;
   state = 'resolve';
+  placeBots(CAST);
   result = judge();
   sfx.fire();
   setMsg('판정!');
@@ -789,18 +792,33 @@ function update(dt, now){
   }
   if(state==='live'){
     const t = (now - castStart)/1000;
-    for(const id of IDS){
-      if(id===me) continue;
-      const e = ents[id];
-      if(e.arrived){ e.face = turnToward(e.face, e.tface, TURN*dt); continue; }
-      if(t < e.dep) continue;
-      const dx = e.tx - e.x, dy = e.ty - e.y, d = Math.hypot(dx,dy), step = SPEED*dt;
-      if(d <= step){ e.x = e.tx; e.y = e.ty; e.arrived = true; }
-      else { e.x += dx/d*step; e.y += dy/d*step; e.face = turnToward(e.face, Math.atan2(dy,dx), TURN*dt); }
-    }
+    placeBots(t);
     const left = Math.max(0, CAST - t);
     $('#cfill').style.width = Math.min(100, t/CAST*100) + '%';
     $('#ctime').textContent = left.toFixed(1);
+  }
+}
+
+// 봇 위치/방향을 경과 시간으로 직접 계산 (프레임이 떨어져도 늦지 않음)
+function placeBots(t){
+  for(const id of IDS){
+    if(id===me) continue;
+    const e = ents[id];
+    if(e.sx === undefined) continue;
+    const tt = t - e.dep;
+    if(tt <= 0){ e.x = e.sx; e.y = e.sy; e.face = e.face0; e.arrived = false; continue; }
+    const travel = e.dist / SPEED;
+    if(tt < travel){
+      const k = tt / travel;
+      e.x = e.sx + (e.tx - e.sx)*k; e.y = e.sy + (e.ty - e.sy)*k;
+      e.face = turnToward(e.face0, e.mang, TURN*tt);
+      e.arrived = false;
+    }else{
+      e.x = e.tx; e.y = e.ty;
+      const fArr = turnToward(e.face0, e.mang, TURN*travel);
+      e.face = turnToward(fArr, e.tface, TURN*(tt - travel));
+      e.arrived = true;
+    }
   }
 }
 
