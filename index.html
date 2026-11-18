@@ -44,6 +44,17 @@ h1 small{color:var(--muted);font-weight:400;font-size:12px;margin-left:8px}
 .btn.primary:hover{filter:brightness(1.08)}
 .btn.small{padding:4px 9px;font-size:12px}
 
+.notice{
+  display:flex;gap:12px;align-items:flex-start;max-width:1180px;margin:14px auto 0;padding:10px 14px;
+  border:1px solid #5a4a26;border-radius:10px;background:linear-gradient(#2a2312e6,#1c180ce6);
+  font-size:12.5px;line-height:1.65;color:#e9dfc4;
+}
+.notice .nt{flex:1;display:flex;flex-direction:column;gap:3px}
+.notice b{color:#ffd98a}
+.notice .nx{background:none;border:none;color:#bba776;font-size:20px;line-height:1;padding:0 2px}
+.notice .nx:hover{color:#fff}
+.notice.hide{display:none}
+@media (max-width:900px){ .notice{margin:10px 12px 0} .notice .nt div:first-child{color:#fff} }
 main{
   display:grid;grid-template-columns:minmax(0,400px) minmax(0,1fr);
   gap:20px;padding:18px 22px;max-width:1180px;margin:0 auto;align-items:start;
@@ -208,6 +219,14 @@ main{
   </div>
 </header>
 
+<div class="notice" id="notice">
+  <div class="nt">
+    <div><b>🖥️ PC에서 플레이하세요.</b> 파티 리스트(순번 확인)와 필드를 한눈에 봐야 하는 연습이라, 화면이 넓은 PC 브라우저에 맞춰 배치돼 있어요. 휴대폰에서는 두 화면이 위아래로 나뉘어 제대로 연습하기 어려워요.</div>
+    <div><b>⚠️ 실제 게임과 다를 수 있어요.</b> 원형 장판 범위(반지름 6), 파동포 판정 방식, 이동·회전 속도, 모범 위치 등은 실제 수치가 아닌 연습용 근사치예요.</div>
+  </div>
+  <button class="nx" id="noticeClose" title="닫기" aria-label="안내 닫기">×</button>
+</div>
+
 <main>
   <section class="col left">
     <div class="panel party">
@@ -262,7 +281,8 @@ main{
         <b>WASD / 방향키</b>: 이동 (몸은 이동 방향으로 돌아가요. 짧게 톡 누르면 덜 돌아가요) ·
         <b>Space</b>: START / 다음 판 · <b>Esc</b>: 결과 닫기<br>
         판정: 파동포(보스 1 + 모니터 3)는 각각 2명을 노려요. 범위 안이 2명 미만이면 모자란 인원은 나머지 파티원 중 <b>무작위</b>, 2명 초과면 범위 안에서 <b>무작위 2명</b>이 맞아요.
-        맞은 사람 위치마다 <b>반지름 6</b>의 원형 장판이 터지고, <b>장판 2개를 맞은 사람은 사망</b>이에요. 사망자 0명이면 성공.
+        맞은 사람 위치마다 <b>반지름 6</b>의 원형 장판이 터지고, <b>장판 2개를 맞은 사람은 사망</b>이에요. 사망자 0명이면 성공.<br>
+        ※ 장판 범위, 판정 방식, 이동·회전 속도, 모범 위치는 실제 게임 수치가 아닌 연습용 근사치예요.
       </div>
     </div>
   </section>
@@ -1010,6 +1030,11 @@ function frame(now){
   if(now - lastStatus > 200){ lastStatus = now; renderStatuses(false); }
   requestAnimationFrame(frame);
 }
+
+/* ================= notice ================= */
+const noticeEl = $('#notice');
+if(store.get('topmon.noticeClosed', false) && window.matchMedia('(min-width:901px)').matches) noticeEl.classList.add('hide');
+$('#noticeClose').addEventListener('click', ()=>{ noticeEl.classList.add('hide'); store.set('topmon.noticeClosed', true); });
 
 /* ================= init ================= */
 stackPositions();
